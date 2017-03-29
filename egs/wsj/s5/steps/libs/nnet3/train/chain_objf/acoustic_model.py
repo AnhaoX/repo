@@ -83,7 +83,7 @@ def generate_chain_egs(dir, data, lat_dir, egs_dir,
                 --frames-per-eg {frames_per_eg} \
                 --srand {srand} \
                 {data} {dir} {lat_dir} {egs_dir}""".format(
-                    command=run_opts.command,
+                    command=run_opts.egs_command,
                     cmvn_opts=cmvn_opts if cmvn_opts is not None else '',
                     feat_type=feat_type,
                     transform_dir=(transform_dir
@@ -177,7 +177,7 @@ def train_new_models(dir, iter, srand, num_jobs,
                         --srand={srand} ark:- ark:- | nnet3-chain-merge-egs \
                         --minibatch-size={num_chunk_per_mb} ark:- ark:- |" \
                     {dir}/{next_iter}.{job}.raw""".format(
-                        command=run_opts.command,
+                        command=run_opts.train_command,
                         train_queue_opt=run_opts.train_queue_opt,
                         dir=dir, iter=iter, srand=iter + srand,
                         next_iter=iter + 1, job=job,

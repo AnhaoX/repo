@@ -10,10 +10,13 @@
 # conf/queue.conf in http://kaldi-asr.org/doc/queue.html for more information,
 # or search for the string 'default_config' in utils/queue.pl or utils/slurm.pl.
 
-export train_cmd="queue.pl"
-export decode_cmd="queue.pl --mem 4G"
-export mkgraph_cmd="queue.pl --mem 8G"
+host_opt='-l h=*rhea*'
+
+export train_cmd="queue.pl $host_opt"
+export decode_cmd="queue.pl -q mobvoi-queue --mem 4G $host_opt"
+export mkgraph_cmd="queue.pl -q mobvoi-queue --mem 8G $host_opt"
 export cuda_cmd="queue.pl --gpu 1"
+export other_cmd="queue.pl -q mobvoi-queue $host_opt"
 
 
 # the rest of this file is present for historical reasons.  it's better to

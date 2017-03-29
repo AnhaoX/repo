@@ -226,6 +226,7 @@ $reduced && echo "$0: reduced frames_per_eg to $frames_per_eg because amount of 
 # $num_archives_intermediate, if $num_archives is more than the maximum number
 # of open filehandles that the system allows per process (ulimit -n).
 max_open_filehandles=$(ulimit -n) || exit 1
+[ $max_open_filehandles -gt 1024 ] && max_open_filehandles=1024
 num_archives_intermediate=$num_archives
 archives_multiple=1
 while [ $[$num_archives_intermediate+4] -gt $max_open_filehandles ]; do

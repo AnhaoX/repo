@@ -235,6 +235,9 @@ def process_args(args):
     run_opts.egs_command = (args.egs_command
                             if args.egs_command is not None else
                             args.command)
+    run_opts.train_command = (args.train_command
+                              if args.train_command is not None else
+                              args.command)
 
     return [args, run_opts]
 

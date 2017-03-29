@@ -57,15 +57,17 @@ for wip in $(echo $word_ins_penalty | sed 's/,/ /g'); do
   for lmwt in `seq $min_lmwt $max_lmwt`; do
     utils/int2sym.pl -f 2- $lang/words.txt <$dir/scoring/$lmwt.${wip}.tra | \
       filter_text > $dir/scoring/$lmwt.${wip}.txt || exit 1;
+    local/split_character.py $dir/scoring/$lmwt.${wip}.txt $dir/scoring/$lmwt.${wip}.txt.char > /dev/null
   done
 done
 
 filter_text <$data/text >$dir/scoring/text.filt
+local/split_character.py $dir/scoring/text.filt $dir/scoring/text.filt.char > /dev/null
 
 for wip in $(echo $word_ins_penalty | sed 's/,/ /g'); do
   $cmd LMWT=$min_lmwt:$max_lmwt $dir/scoring/log/score.LMWT.${wip}.log \
     compute-wer --text --mode=present \
-    ark:$dir/scoring/text.filt ark:$dir/scoring/LMWT.${wip}.txt ">&" $dir/wer_LMWT_${wip} || exit 1;
+    ark:$dir/scoring/text.filt.char ark:$dir/scoring/LMWT.${wip}.txt.char ">&" $dir/wer_LMWT_${wip} || exit 1;
 done
 
 exit 0

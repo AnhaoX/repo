@@ -74,13 +74,13 @@ for f in $data/feats.scp $lang/L.fst $srcdir/final.mdl $extra_files; do
   [ ! -f $f ] && echo "$0: expected file $f to exist" && exit 1;
 done
 
-sdata=$data/split$nj
+sdata=$data/split${nj}utt
 splice_opts=`cat $srcdir/splice_opts 2>/dev/null`
 thread_string=
 [ $num_threads -gt 1 ] && thread_string="-parallel --num-threads=$num_threads"
 
 mkdir -p $dir/log
-split_data.sh $data $nj || exit 1;
+split_data.sh --per-utt $data $nj || exit 1;
 echo $nj > $dir/num_jobs
 
 utils/lang/check_phones_compatible.sh $lang/phones.txt $srcdir/phones.txt || exit 1;

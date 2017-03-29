@@ -107,8 +107,8 @@ cp $lang/phones.txt $dir || exit 1;
 
 nj=$(cat $denlatdir/num_jobs) || exit 1;
 
-sdata=$data/split$nj
-utils/split_data.sh $data $nj
+sdata=$data/split${nj}utt
+utils/split_data.sh --per-utt $data $nj
 
 # Get list of validation utterances.
 awk '{print $1}' $data/utt2spk | utils/shuffle_list.pl | head -$num_utts_subset \
@@ -234,6 +234,7 @@ num_archives=$[$num_frames/$frames_per_iter+1]
 # $num_archives_intermediate, if $num_archives is more than the maximum number
 # of open filehandles that the system allows per process (ulimit -n).
 max_open_filehandles=$(ulimit -n) || exit 1
+[ $max_open_filehandles -gt 1024 ] && max_open_filehandles=1024
 num_archives_intermediate=$num_archives
 archives_multiple=1
 while [ $[$num_archives_intermediate+4] -gt $max_open_filehandles ]; do

@@ -56,7 +56,7 @@ oov=`cat $lang/oov.int`
 nj=`cat $alidir/num_jobs` || exit 1;
 silphonelist=`cat $lang/phones/silence.csl`
 ciphonelist=`cat $lang/phones/context_indep.csl` || exit 1;
-sdata=$data/split$nj;
+sdata=$data/split${nj}utt;
 splice_opts=`cat $alidir/splice_opts 2>/dev/null` # frame-splicing options.
 cmvn_opts=`cat $alidir/cmvn_opts 2>/dev/null`
 delta_opts=`cat $alidir/delta_opts 2>/dev/null`
@@ -70,7 +70,7 @@ utils/lang/check_phones_compatible.sh $lang/phones.txt $alidir/phones.txt || exi
 cp $lang/phones.txt $dir || exit 1;
 
 echo $nj >$dir/num_jobs
-[[ -d $sdata && $data/feats.scp -ot $sdata ]] || split_data.sh $data $nj || exit 1;
+[[ -d $sdata && $data/feats.scp -ot $sdata ]] || split_data.sh --per-utt $data $nj || exit 1;
 
 # Set up features.
 

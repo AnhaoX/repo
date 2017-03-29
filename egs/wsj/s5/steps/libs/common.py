@@ -312,7 +312,7 @@ def get_feat_dim_from_scp(feat_scp):
 
 
 def split_data(data, num_jobs):
-    run_kaldi_command("utils/split_data.sh {data} {num_jobs}".format(
+    run_kaldi_command("utils/split_data.sh --per-utt {data} {num_jobs}".format(
                         data=data,
                         num_jobs=num_jobs))
 

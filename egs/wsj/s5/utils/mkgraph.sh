@@ -44,8 +44,13 @@ fi
 if [ -f path.sh ]; then . ./path.sh; fi
 
 lang=$1
-tree=$2/tree
-model=$2/final.mdl
+if [[ $2 = *.mdl ]]; then
+  tree=`dirname $2`/tree
+  model=$2
+else
+  tree=$2/tree
+  model=$2/final.mdl
+fi
 dir=$3
 
 mkdir -p $dir

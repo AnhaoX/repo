@@ -32,6 +32,8 @@ class RunOpts:
 
     def __init__(self):
         self.command = None
+        self.egs_command = None
+        self.train_command = None
         self.train_queue_opt = None
         self.combine_queue_opt = None
         self.prior_gpu_opt = None
@@ -550,6 +552,10 @@ class CommonParser:
                                  action=common_lib.NullstrToNoneAction,
                                  default="queue.pl",
                                  help="Script to launch egs jobs")
+        self.parser.add_argument("--train.cmd", type=str, dest="train_command",
+                                 action=common_lib.NullstrToNoneAction,
+                                 default="queue.pl",
+                                 help="Script to train models")
         self.parser.add_argument("--use-gpu", type=str,
                                  action=common_lib.StrToBoolAction,
                                  choices=["true", "false"],

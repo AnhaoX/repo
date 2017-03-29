@@ -334,6 +334,9 @@ while [ $x -lt $num_iters ]; do
   fi
 
   rm $dir/cache.$x 2>/dev/null || true
+  if [ -z "${iter_to_epoch[$[$x-2]]}" ] && [ $x -gt 2 ]; then
+    rm $dir/$[$x-2].mdl 2>/dev/null
+  fi
   x=$[$x+1]
   num_archives_processed=$[num_archives_processed+num_jobs_nnet]
 done

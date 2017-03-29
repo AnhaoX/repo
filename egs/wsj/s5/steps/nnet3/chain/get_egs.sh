@@ -122,8 +122,8 @@ for f in $data/feats.scp $latdir/lat.1.gz $latdir/final.mdl \
   [ ! -f $f ] && echo "$0: no such file $f" && exit 1;
 done
 
-sdata=$data/split$nj
-utils/split_data.sh $data $nj
+sdata=$data/split${nj}utt
+utils/split_data.sh --per-utt $data $nj
 
 mkdir -p $dir/log $dir/info
 
@@ -250,6 +250,7 @@ num_archives=$[$num_frames/$frames_per_iter+1]
 # $num_archives_intermediate, if $num_archives is more than the maximum number
 # of open filehandles that the system allows per process (ulimit -n).
 max_open_filehandles=$(ulimit -n) || exit 1
+[ $max_open_filehandles -gt 1024 ] && max_open_filehandles=1024
 num_archives_intermediate=$num_archives
 archives_multiple=1
 while [ $[$num_archives_intermediate+4] -gt $max_open_filehandles ]; do
