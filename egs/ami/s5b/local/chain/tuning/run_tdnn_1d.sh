@@ -1,22 +1,19 @@
 #!/bin/bash
 
-# This is a chain-training script with TDNN neural networks.
-# Please see RESULTS_* for examples of command lines invoking this script.
+# same as 1b but uses PCA instead of
+# LDA features for the ivector extractor.
 
-
-# local/nnet3/run_tdnn.sh --stage 8 --use-ihm-ali true --mic sdm1 # rerunning with biphone
-# local/nnet3/run_tdnn.sh --stage 8 --use-ihm-ali false --mic sdm1
-
-# local/chain/run_tdnn.sh --use-ihm-ali true --mic sdm1 --train-set train --gmm tri3 --nnet3-affix "" --stage 12 &
-
-# local/chain/run_tdnn.sh --use-ihm-ali true --mic mdm8 --stage 12 &
-# local/chain/run_tdnn.sh --use-ihm-ali true --mic mdm8 --train-set train --gmm tri3 --nnet3-affix "" --stage 12 &
-
-# local/chain/run_tdnn.sh --mic sdm1 --use-ihm-ali true --train-set train_cleaned  --gmm tri3_cleaned&
-
+# Results on 03/27/2017:
+# local/chain/compare_wer_general.sh ihm tdnn1b_sp_bi tdnn1d_sp_bi
+# System                   tdnn1b_sp_bi tdnn1d_sp_bi
+# WER on dev               22.0         21.9
+# WER on eval              22.2         22.3
+# Final train prob        -0.0813472   -0.0807054
+# Final valid prob        -0.132032    -0.133564
+# Final train prob (xent) -1.41543     -1.41951
+# Final valid prob (xent) -1.62316     -1.63021
 
 set -e -o pipefail
-
 # First the options that are passed through to run_ivector_common.sh
 # (some of which are also used in this script directly).
 stage=0
@@ -28,19 +25,20 @@ train_set=train_cleaned
 gmm=tri3_cleaned  # the gmm for the target data
 ihm_gmm=tri3  # the gmm for the IHM system (if --use-ihm-ali true).
 num_threads_ubm=32
+ivector_transform_type=pca
 nnet3_affix=_cleaned  # cleanup affix for nnet3 and chain dirs, e.g. _cleaned
 
 # The rest are configs specific to this script.  Most of the parameters
 # are just hardcoded at this level, in the commands below.
 train_stage=-10
 tree_affix=  # affix for tree directory, e.g. "a" or "b", in case we change the configuration.
-tdnn_affix=  #affix for TDNN directory, e.g. "a" or "b", in case we change the configuration.
+tdnn_affix=1d  #affix for TDNN directory, e.g. "a" or "b", in case we change the configuration.
 common_egs_dir=  # you can set this to use previously dumped egs.
 
 # End configuration section.
 echo "$0 $@"  # Print the command line for logging
 
-. cmd.sh
+. ./cmd.sh
 . ./path.sh
 . ./utils/parse_options.sh
 
@@ -60,6 +58,7 @@ local/nnet3/run_ivector_common.sh --stage $stage \
                                   --train-set $train_set \
                                   --gmm $gmm \
                                   --num-threads-ubm $num_threads_ubm \
+                                  --ivector-transform-type "$ivector_transform_type" \
                                   --nnet3-affix "$nnet3_affix"
 
 # Note: the first stage of the following script is stage 8.
@@ -158,24 +157,52 @@ if [ $stage -le 14 ]; then
       --cmd "$train_cmd" 4200 ${lores_train_data_dir} data/lang_chain $ali_dir $tree_dir
 fi
 
+xent_regularize=0.1
+
 if [ $stage -le 15 ]; then
-  mkdir -p $dir
+  echo "$0: creating neural net configs using the xconfig parser";
 
-  echo "$0: creating neural net configs";
+  num_targets=$(tree-info $tree_dir/tree |grep num-pdfs|awk '{print $2}')
+  learning_rate_factor=$(echo "print 0.5/$xent_regularize" | python)
 
-  steps/nnet3/tdnn/make_configs.py \
-    --self-repair-scale-nonlinearity 0.00001 \
-    --feat-dir data/$mic/${train_set}_sp_hires_comb \
-    --ivector-dir $train_ivector_dir \
-    --tree-dir $tree_dir \
-    --relu-dim 450 \
-    --splice-indexes "-1,0,1 -1,0,1,2 -3,0,3 -3,0,3 -3,0,3 -6,-3,0 0" \
-    --use-presoftmax-prior-scale false \
-    --xent-regularize 0.1 \
-    --xent-separate-forward-affine true \
-    --include-log-softmax false \
-    --final-layer-normalize-target 1.0 \
-   $dir/configs || exit 1;
+  mkdir -p $dir/configs
+  cat <<EOF > $dir/configs/network.xconfig
+  input dim=100 name=ivector
+  input dim=40 name=input
+
+  # please note that it is important to have input layer with the name=input
+  # as the layer immediately preceding the fixed-affine-layer to enable
+  # the use of short notation for the descriptor
+  fixed-affine-layer name=lda input=Append(-1,0,1,ReplaceIndex(ivector, t, 0)) affine-transform-file=$dir/configs/lda.mat
+
+  # the first splicing is moved before the lda layer, so no splicing here
+  relu-renorm-layer name=tdnn1 dim=450
+  relu-renorm-layer name=tdnn2 input=Append(-1,0,1) dim=450
+  relu-renorm-layer name=tdnn3 input=Append(-1,0,1) dim=450
+  relu-renorm-layer name=tdnn4 input=Append(-3,0,3) dim=450
+  relu-renorm-layer name=tdnn5 input=Append(-3,0,3) dim=450
+  relu-renorm-layer name=tdnn6 input=Append(-3,0,3) dim=450
+  relu-renorm-layer name=tdnn7 input=Append(-3,0,3) dim=450
+
+  ## adding the layers for chain branch
+  relu-renorm-layer name=prefinal-chain input=tdnn7 dim=450 target-rms=0.5
+  output-layer name=output include-log-softmax=false dim=$num_targets max-change=1.5
+
+  # adding the layers for xent branch
+  # This block prints the configs for a separate output that will be
+  # trained with a cross-entropy objective in the 'chain' models... this
+  # has the effect of regularizing the hidden parts of the model.  we use
+  # 0.5 / args.xent_regularize as the learning rate factor- the factor of
+  # 0.5 / args.xent_regularize is suitable as it means the xent
+  # final-layer learns at a rate independent of the regularization
+  # constant; and the 0.5 was tuned so as to make the relative progress
+  # similar in the xent and regular final layers.
+  relu-renorm-layer name=prefinal-xent input=tdnn7 dim=450 target-rms=0.5
+  output-layer name=output-xent dim=$num_targets learning-rate-factor=$learning_rate_factor max-change=1.5
+
+EOF
+
+  steps/nnet3/xconfig_to_configs.py --xconfig-file $dir/configs/network.xconfig --config-dir $dir/configs/
 fi
 
 if [ $stage -le 16 ]; then
@@ -188,7 +215,7 @@ if [ $stage -le 16 ]; then
     --cmd "$decode_cmd" \
     --feat.online-ivector-dir $train_ivector_dir \
     --feat.cmvn-opts "--norm-means=false --norm-vars=false" \
-    --chain.xent-regularize 0.1 \
+    --chain.xent-regularize $xent_regularize \
     --chain.leaky-hmm-coefficient 0.1 \
     --chain.l2-regularize 0.00005 \
     --chain.apply-deriv-weights false \
