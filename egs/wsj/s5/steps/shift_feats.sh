@@ -48,7 +48,7 @@ spk_prefix="fs$num_frames_shift-"
 # make $featdir an absolute pathname.
 featdir=`perl -e '($dir,$pwd)= @ARGV; if($dir!~m:^/:) { $dir = "$pwd/$dir"; } print $dir; ' $featdir ${PWD}`
 
-utils/split_data.sh $data_in $nj || exit 1;
+utils/split_data.sh --per-utt $data_in $nj || exit 1;
 
 data=${data_in}_fs$num_frames_shift
 
@@ -71,7 +71,7 @@ done
 
 $cmd JOB=1:$nj $logdir/shift.JOB.log \
   shift-feats --shift=$num_frames_shift \
-  scp:$data_in/split$nj/JOB/feats.scp ark:- \| \
+  scp:$data_in/split${nj}utt/JOB/feats.scp ark:- \| \
   copy-feats --compress=$compress ark:- \
   ark,scp:$featdir/raw_feats_$name.JOB.ark,$featdir/raw_feats_$name.JOB.scp || exit 1;
 
