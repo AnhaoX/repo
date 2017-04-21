@@ -107,7 +107,8 @@ enum InputType {
   kFileInput,
   kStandardInput,
   kOffsetFileInput,
-  kPipeInput
+  kPipeInput,
+  kSSTableInput
 };
 
 /// ClassifyRxfilenames interprets filenames for reading as follows:

@@ -1072,6 +1072,9 @@ echo "OPENFSTLIBS = $OPENFSTLIBS" >> kaldi.mk
 echo "OPENFSTLDFLAGS = $OPENFSTLDFLAGS" >> kaldi.mk
 echo >> kaldi.mk
 
+# SSTable
+echo "MOBVOILIBS = `pwd`/libmobvoi.a" >> kaldi.mk
+
 # OS-specific steps given below append to kaldi.mk
 echo "Doing OS specific configurations ..."
 
@@ -1303,6 +1306,9 @@ else
   failure "Could not detect the platform or we have not yet worked out the
   appropriate configuration for this platform. Please contact the developers."
 fi
+
+# SSTable
+echo 'LDLIBS += $(MOBVOILIBS)' >> kaldi.mk
 
 # Append the flags set by environment variables last so they can be used
 # to override the automatically generated configuration.

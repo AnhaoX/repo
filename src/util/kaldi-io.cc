@@ -27,6 +27,8 @@
 
 #include "util/kaldi-pipebuf.h"
 
+#include "mobvoi/base/sstable_singleton.h"
+
 #ifdef KALDI_CYGWIN_COMPAT
 #include "util/kaldi-cygwin-io-inl.h"
 #define MapOsPath(x) MapCygwinPath(x)
@@ -143,6 +145,7 @@ InputType ClassifyRxfilename(const std::string &filename) {
     // refuse to deal with it upfront.
     return kNoInput;
   } else {
+    if (filename.compare(0, 7, "sstable") == 0) return kSSTableInput;
     const char *d = c;
     while (d[1] != '\0') d++;  // go to last char.
     if (*d == '|') return kPipeInput;  // an input pipe.
@@ -362,6 +365,24 @@ class InputImplBase {
   // (has efficiency benefits).
 
   virtual ~InputImplBase() { }
+};
+
+class SSTableInputImpl: public InputImplBase {
+ public:
+  SSTableInputImpl() {
+    sstable_ = Singleton<mobvoi::SSTableSingleton>::get();
+  }
+  virtual bool Open(const std::string &filename, bool binary) {
+    return sstable_->GetData(filename, &stream_);
+  }
+  virtual std::istream &Stream() { return stream_; }
+  virtual int32 Close() { return 0; }
+  virtual InputType MyType() { return kSSTableInput; }
+  virtual ~SSTableInputImpl() {}
+
+ private:
+  mobvoi::SSTableSingleton* sstable_;
+  std::istringstream stream_;
 };
 
 class FileInputImpl: public InputImplBase {
@@ -788,6 +809,8 @@ bool Input::OpenInternal(const std::string &rxfilename,
     impl_ = new PipeInputImpl();
   } else if (type == kOffsetFileInput) {
     impl_ = new OffsetFileInputImpl();
+  } else if (type == kSSTableInput) {
+    impl_ = new SSTableInputImpl();
   } else {  // type == kNoInput
     KALDI_WARN << "Invalid input filename format "<<
         PrintableRxfilename(rxfilename);

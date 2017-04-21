@@ -4,6 +4,7 @@ all:
 
 
 include ../kaldi.mk
+EXTRA_CXXFLAGS = -I../sstable_include -I../sstable_include/protobuf/include --std=c++0x
 
 TESTFILES = const-integer-set-test stl-utils-test text-utils-test \
     edit-distance-test hash-list-test kaldi-io-test parse-options-test \

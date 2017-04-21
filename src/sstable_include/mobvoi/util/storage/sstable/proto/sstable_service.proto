@@ -1,0 +1,89 @@
+syntax = "proto2";
+
+package file;
+
+option cc_generic_services = true;
+
+message SSTableResponse {
+  required bool success = 1;
+  optional string message = 2;
+}
+
+message PutRequest {
+  required string key = 1;
+  required string value = 2;
+}
+
+message DeleteRequest {
+  required string key = 1;
+}
+
+message GetRequest {
+  required string key = 1;
+}
+
+message GetResponse {
+  required bool success = 1;
+  optional string value = 2;
+  optional string message = 3;
+}
+
+message NewIteratorRequest {
+  required NewIteratorOptions options = 1;
+}
+
+message SeekKeyRequest {
+  required string key = 1;
+  required string uid = 2;
+}
+
+message NextResponse {
+  required bool success = 1;
+  optional string key = 2;
+  optional string value = 3;
+  optional string message = 4;
+}
+
+message IteratorRequest {
+  required string uid = 1;
+  //  For NextBatch
+  optional int32 batch_size = 2;
+}
+
+message NewIteratorResponse {
+  required bool success = 1;
+  optional string message = 2;
+  optional string uid = 3;
+}
+
+message SStableRecord {
+  required string key = 1;
+  optional string value = 4;
+}
+
+message NextBatchResponse {
+  required bool success = 1;
+  optional string message = 2;
+  repeated SStableRecord records = 3;
+}
+
+message NewIteratorOptions {
+  optional bool reserved_all_fields = 1 [default = true];
+  repeated string reserved_field = 2;
+  optional bool return_key_only = 3;
+}
+
+service SSTableServer {
+  rpc Put(PutRequest) returns(SSTableResponse);
+  rpc Delete(DeleteRequest) returns(SSTableResponse);
+  rpc Get(GetRequest) returns(GetResponse);
+
+  rpc NewIterator(NewIteratorRequest) returns(NewIteratorResponse);
+  rpc DeleteIterator(IteratorRequest) returns(SSTableResponse);
+
+  rpc SeekToFirst(IteratorRequest) returns(SSTableResponse);
+  rpc SeekKey(SeekKeyRequest) returns(SSTableResponse);
+
+  rpc Next(IteratorRequest) returns(NextResponse);
+  rpc NextBatch(IteratorRequest) returns(NextBatchResponse);
+}
