@@ -344,7 +344,8 @@ def GenerateReverberatedWavScp(wav_scp,  # a dictionary whose values are the Kal
             wav_original_pipe = wav_scp[recording_id]
             # check if it is really a pipe
             if len(wav_original_pipe.split()) == 1:
-                wav_original_pipe = "cat {0} |".format(wav_original_pipe)
+                # wav_original_pipe = "cat {0} |".format(wav_original_pipe)
+                wav_original_pipe = "{0}".format(wav_original_pipe)
             speech_dur = durations[recording_id]
             max_noises_recording = math.floor(max_noises_per_minute * speech_dur / 60)
 
@@ -364,7 +365,12 @@ def GenerateReverberatedWavScp(wav_scp,  # a dictionary whose values are the Kal
             if reverberate_opts == "" or i == 0:
                 wav_corrupted_pipe = "{0}".format(wav_original_pipe) 
             else:
-                wav_corrupted_pipe = "{0} wav-reverberate --shift-output={1} {2} - - |".format(wav_original_pipe, shift_output, reverberate_opts)
+                if len(wav_original_pipe.split()) == 1:
+                    # For SSTable and ordinary waves
+                    wav_corrupted_pipe = "wav-reverberate --shift-output={1} {2} {0} - |".format(wav_original_pipe, shift_output, reverberate_opts)
+                else:
+                    # for pipeline
+                    wav_corrupted_pipe = "{0} wav-reverberate --shift-output={1} {2} - - |".format(wav_original_pipe, shift_output, reverberate_opts)
 
             new_recording_id = GetNewId(recording_id, prefix, i)
             corrupted_wav_scp[new_recording_id] = wav_corrupted_pipe
@@ -412,7 +418,7 @@ def CreateReverberatedCopy(input_dir,
                            ):
     
     wav_scp = ParseFileToDict(input_dir + "/wav.scp", value_processor = lambda x: " ".join(x))
-    if not os.path.isfile(input_dir + "/reco2dur"):
+    if not os.path.isfile(input_dir + "/utt2dur"):
         print("Getting the duration of the recordings...");
         read_entire_file="false"
         for value in wav_scp.values():
@@ -420,8 +426,8 @@ def CreateReverberatedCopy(input_dir,
             if "sox" in value and "speed" in value:
                 read_entire_file="true"
                 break
-        data_lib.RunKaldiCommand("wav-to-duration --read-entire-file={1} scp:{0}/wav.scp ark,t:{0}/reco2dur".format(input_dir, read_entire_file))
-    durations = ParseFileToDict(input_dir + "/reco2dur", value_processor = lambda x: float(x[0]))
+        data_lib.RunKaldiCommand("wav-to-duration --read-entire-file={1} scp:{0}/wav.scp ark,t:{0}/utt2dur".format(input_dir, read_entire_file))
+    durations = ParseFileToDict(input_dir + "/utt2dur", value_processor = lambda x: float(x[0]))
     foreground_snr_array = map(lambda x: float(x), foreground_snr_string.split(':'))
     background_snr_array = map(lambda x: float(x), background_snr_string.split(':'))
 
@@ -440,6 +446,8 @@ def CreateReverberatedCopy(input_dir,
         # Create the utt2uniq file
         CreateCorruptedUtt2uniq(input_dir, output_dir, num_replicas, include_original, prefix)
 
+    if os.path.isfile(input_dir + "/utt2dur"):
+        AddPrefixToFields(input_dir + "/utt2dur", output_dir + "/utt2dur", num_replicas, include_original, prefix, field =[0])
     if os.path.isfile(input_dir + "/text"):
         AddPrefixToFields(input_dir + "/text", output_dir + "/text", num_replicas, include_original, prefix, field =[0])
     if os.path.isfile(input_dir + "/segments"):
