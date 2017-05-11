@@ -674,10 +674,20 @@ class CommonParser:
                                  help="""Directory with egs. If specified this
                                  directory will be used rather than extracting
                                  egs""")
+        self.parser.add_argument("--egs.newdir", type=str, dest='egs_newdir',
+                                 default=None,
+                                 action=common_lib.NullstrToNoneAction,
+                                 help="""Directory with egs. If specified this
+                                 directory will replace the default directory as
+                                 the location storing egs.""")
         self.parser.add_argument("--egs.stage", type=int, dest='egs_stage',
                                  default=0,
                                  help="Stage at which get_egs.sh should be "
                                  "restarted")
+        self.parser.add_argument("--egs.nj", type=int, dest='egs_nj',
+                                 default=0,
+                                 help="""Number of jobs with which get_egs.sh
+                                 will run.""")
         self.parser.add_argument("--egs.opts", type=str, dest='egs_opts',
                                  default=None,
                                  action=common_lib.NullstrToNoneAction,

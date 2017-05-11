@@ -209,6 +209,8 @@ def train(args, run_opts, background_process_handler):
                                              dir=args.dir))
 
     default_egs_dir = '{0}/egs'.format(args.dir)
+    if args.egs_newdir is not None:
+        default_egs_dir = args.egs_newdir
     if (args.stage <= -4) and args.egs_dir is None:
         logger.info("Generating egs")
 
@@ -223,7 +225,7 @@ def train(args, run_opts, background_process_handler):
             online_ivector_dir=args.online_ivector_dir,
             samples_per_iter=args.samples_per_iter,
             transform_dir=args.transform_dir,
-            stage=args.egs_stage)
+            stage=args.egs_stage, nj=args.egs_nj)
 
     if args.egs_dir is None:
         egs_dir = default_egs_dir

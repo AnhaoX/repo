@@ -101,8 +101,8 @@ for f in $data/feats.scp $alidir/ali.1.gz $alidir/final.mdl $alidir/tree $extra_
   [ ! -f $f ] && echo "$0: no such file $f" && exit 1;
 done
 
-sdata=$data/split$nj
-utils/split_data.sh $data $nj
+sdata=$data/split${nj}utt
+utils/split_data.sh --per-utt $data $nj
 
 mkdir -p $dir/log $dir/info
 cp $alidir/tree $dir
