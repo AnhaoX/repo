@@ -273,7 +273,7 @@ def train(args, run_opts):
 
     # split the training data into parts for individual jobs
     # we will use the same number of jobs as that used for alignment
-    common_lib.execute_command("utils/split_data.sh {0} {1}".format(
+    common_lib.execute_command("utils/split_data.sh --per-utt {0} {1}".format(
             args.feat_dir, num_jobs))
     shutil.copy('{0}/tree'.format(args.tree_dir), args.dir)
     with open('{0}/num_jobs'.format(args.dir), 'w') as f:
@@ -332,6 +332,8 @@ def train(args, run_opts):
                                right_context_final >= 0 else -1)
 
     default_egs_dir = '{0}/egs'.format(args.dir)
+    if args.egs_newdir is not None:
+        default_egs_dir = args.egs_newdir
     if (args.stage <= -3) and args.egs_dir is None:
         logger.info("Generating egs")
         # this is where get_egs.sh is called.
@@ -354,7 +356,7 @@ def train(args, run_opts):
             online_ivector_dir=args.online_ivector_dir,
             frames_per_iter=args.frames_per_iter,
             transform_dir=args.transform_dir,
-            stage=args.egs_stage)
+            stage=args.egs_stage, nj=args.egs_nj)
 
     if args.egs_dir is None:
         egs_dir = default_egs_dir

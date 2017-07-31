@@ -200,6 +200,7 @@ fi
 
 # Work out total number of archives. Add one on the assumption the
 # num-frames won't divide exactly, and we want to round up.
+num_frames=$(cat $dir/info/num_frames)
 num_archives=$[$num_frames/$frames_per_iter+1]
 
 # We may have to first create a smaller number of larger archives, with number

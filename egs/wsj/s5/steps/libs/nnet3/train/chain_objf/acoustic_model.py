@@ -62,7 +62,7 @@ def create_denominator_fst(dir, tree_dir, run_opts):
 
 def generate_chain_egs(dir, data, lat_dir, egs_dir,
                        left_context, right_context,
-                       run_opts, stage=0,
+                       run_opts, stage=0, nj=15,
                        left_tolerance=None, right_tolerance=None,
                        left_context_initial=-1, right_context_final=-1,
                        frame_subsampling_factor=3,
@@ -90,6 +90,7 @@ def generate_chain_egs(dir, data, lat_dir, egs_dir,
                 --frame-subsampling-factor {frame_subsampling_factor} \
                 --alignment-subsampling-factor {alignment_subsampling_factor} \
                 --stage {stage} \
+                --nj {nj} \
                 --frames-per-iter {frames_per_iter} \
                 --frames-per-eg {frames_per_eg_str} \
                 --srand {srand} \
@@ -114,7 +115,7 @@ def generate_chain_egs(dir, data, lat_dir, egs_dir,
                                      else ''),
                     frame_subsampling_factor=frame_subsampling_factor,
                     alignment_subsampling_factor=alignment_subsampling_factor,
-                    stage=stage, frames_per_iter=frames_per_iter,
+                    stage=stage, nj=nj, frames_per_iter=frames_per_iter,
                     frames_per_eg_str=frames_per_eg_str, srand=srand,
                     data=data, lat_dir=lat_dir, dir=dir, egs_dir=egs_dir,
                     egs_opts=egs_opts if egs_opts is not None else ''))
